@@ -361,8 +361,9 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;background:rgba(6,9,18,0.92)
 </div></div>
 
 <div class="page" id="notebook"><div class="wrap">
-  <div class="ph"><div class="ph-eye">// google colab</div><h2>Notebook &mdash; All Cells Explained</h2><p>Every code cell explained line by line in plain English.</p></div>
+  <div class="ph"><div class="ph-eye">// google colab</div><h2>Notebook &mdash; All Cells Explained</h2><p>Every code cell explained line by line in plain English. Full content from the Notebook Explained document.</p></div>
 
+  <!-- CELL 1 -->
   <div class="nb"><div class="nb-hd"><span class="nb-num">Cell 1</span><span class="nb-title">Install &amp; Import Libraries</span></div>
   <div class="nb-code"><pre>!pip install xgboost --quiet
 import pandas as pd
@@ -375,208 +376,493 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import (accuracy_score, f1_score, confusion_matrix,
-                             classification_report)
+from sklearn.metrics import (accuracy_score, precision_score, recall_score,
+                             f1_score, confusion_matrix, classification_report)
 from sklearn.utils.class_weight import compute_class_weight
 import xgboost as xgb
-import joblib, time, warnings
-warnings.filterwarnings('ignore')</pre></div>
+import joblib
+import time
+import warnings
+warnings.filterwarnings('ignore')
+print('Libraries are successfully imported')</pre></div>
   <div class="nb-exp"><div class="nb-el">What this does</div>
+  <p>This is the first thing you always do in any Python project — import the tools you need. Think of it like getting your ingredients ready before cooking.</p>
   <ul>
-    <li><code>!pip install xgboost</code> &mdash; not pre-installed in Colab, this downloads it</li>
-    <li><code>pandas</code> &mdash; reads CSV files, works with data tables like Excel in Python</li>
-    <li><code>numpy</code> &mdash; math on large number arrays</li>
-    <li><code>matplotlib / seaborn</code> &mdash; drawing charts and graphs</li>
-    <li><code>LabelEncoder</code> &mdash; converts "attack" to 0, "dos" to 1 etc.</li>
-    <li><code>StandardScaler</code> &mdash; normalizes all features to the same scale</li>
-    <li><code>StratifiedKFold</code> &mdash; for cross-validation keeping class distribution balanced</li>
-    <li><code>compute_class_weight</code> &mdash; calculates weights to fix imbalanced data</li>
-    <li><code>xgboost</code> &mdash; the best performing model in the project</li>
-    <li><code>joblib</code> &mdash; saves trained models as .pkl files</li>
-    <li><code>time</code> &mdash; measures how long each model takes to train</li>
+    <li><code>!pip install xgboost</code> &mdash; Downloads and installs XGBoost (Google Colab doesn't have it by default)</li>
+    <li><code>pandas (pd)</code> &mdash; Used to read CSV files and work with tables of data (like Excel in Python)</li>
+    <li><code>numpy (np)</code> &mdash; Used for math and working with large number arrays</li>
+    <li><code>matplotlib &amp; seaborn</code> &mdash; Used to draw charts and graphs</li>
+    <li><code>LabelEncoder</code> &mdash; Converts text labels like 'attack' to numbers like 0</li>
+    <li><code>StandardScaler</code> &mdash; Normalizes all features to the same scale</li>
+    <li><code>StratifiedKFold</code> &mdash; Used for cross-validation (testing model stability)</li>
+    <li><code>DecisionTreeClassifier</code> &mdash; The Decision Tree model</li>
+    <li><code>RandomForestClassifier</code> &mdash; The Random Forest model</li>
+    <li><code>KNeighborsClassifier</code> &mdash; The KNN model</li>
+    <li><code>LogisticRegression</code> &mdash; The Logistic Regression model</li>
+    <li><code>accuracy_score, f1_score etc.</code> &mdash; Tools to measure how good the models are</li>
+    <li><code>compute_class_weight</code> &mdash; Calculates weights to fix the imbalanced dataset</li>
+    <li><code>xgboost (xgb)</code> &mdash; The XGBoost model (best performer)</li>
+    <li><code>joblib</code> &mdash; Used to save trained models to .pkl files</li>
+    <li><code>time</code> &mdash; Used to measure how long each model takes to train</li>
+    <li><code>warnings.filterwarnings('ignore')</code> &mdash; Hides unimportant warning messages</li>
   </ul></div></div>
 
-  <div class="nb"><div class="nb-hd"><span class="nb-num">Cell 2</span><span class="nb-title">Load Dataset</span></div>
+  <!-- CELL 2 -->
+  <div class="nb"><div class="nb-hd"><span class="nb-num">Cell 2</span><span class="nb-title">Load the Dataset</span></div>
   <div class="nb-code"><pre>from google.colab import files
-uploaded = files.upload()
+uploaded = files.upload()   # opens file picker in Colab
+
 df = pd.read_csv('dataset_v5.csv')
-print("Shape           :", df.shape)
-print("Missing values  :", df.isnull().sum().sum())
-print(df['label'].value_counts())</pre></div>
+print('Shape           :', df.shape)
+print('Missing values  :', df.isnull().sum().sum())
+print('\nLabel distribution:')
+print(df['label'].value_counts())
+print('\nLabel % distribution:')
+print((df['label'].value_counts() / len(df) * 100).round(2))
+print('\nPCAP source breakdown:')
+print(df['pcap_source'].value_counts().to_string())</pre></div>
   <div class="nb-exp"><div class="nb-el">What this does</div>
+  <p>This cell loads the dataset CSV file and inspects it.</p>
   <ul>
-    <li><code>files.upload()</code> &mdash; opens file picker in Colab to upload the CSV</li>
-    <li><code>pd.read_csv()</code> &mdash; reads into a DataFrame. Result: 101,825 rows x 56 columns</li>
-    <li><code>df.isnull().sum().sum()</code> &mdash; counts missing values. Output was 0 &mdash; none at all</li>
-    <li><code>value_counts()</code> &mdash; counts rows per class, shows the imbalance problem</li>
+    <li><code>files.upload()</code> &mdash; Opens a file picker so you can upload the CSV from your computer to Colab</li>
+    <li><code>pd.read_csv('dataset_v5.csv')</code> &mdash; Reads the CSV file into a DataFrame (basically a table). The result <code>df</code> is a table with 101,825 rows and 56 columns</li>
+    <li><code>df.shape</code> &mdash; Prints (101825, 56) — 101,825 rows, 56 columns</li>
+    <li><code>df.isnull().sum().sum()</code> &mdash; Counts missing values. Output was 0 — no missing values at all! This is because the PCAP converter script filled empty values with 0 instead of leaving blanks</li>
+    <li><code>df['label'].value_counts()</code> &mdash; Counts how many rows belong to each class</li>
+    <li><code>pcap_source</code> &mdash; Shows which PCAP file each row came from (24 files total)</li>
   </ul>
-  <div class="rbox">dos: 45,905 (45.08%) | recon: 37,026 (36.36%) | normal: 13,225 (12.99%) | attack: 5,669 (5.57%)
-IMBALANCED: Attack is only 5.57%</div>
+  <div class="rbox">dos: 45,905 | recon: 37,026 | normal: 13,225 | attack: 5,669
+DOS=45.08% | Recon=36.36% | Normal=12.99% | Attack=only 5.57%
+→ IMBALANCED DATASET: Attack is the rarest class</div>
   </div></div>
 
+  <!-- CELL 3 -->
   <div class="nb"><div class="nb-hd"><span class="nb-num">Cell 3</span><span class="nb-title">Correlation Heatmap</span></div>
-  <div class="nb-code"><pre>corr = numeric_df.corr().abs()
-sns.heatmap(corr, cmap='coolwarm', center=0)
+  <div class="nb-code"><pre># Select only numeric feature columns (exclude identifiers and label)
+drop_ids = ['src_ip', 'dst_ip', 'src_port', 'dst_port',
+            'protocol', 'flow_start_time', 'pcap_source', 'label']
+numeric_df = df.drop(columns=drop_ids)
+
+# Compute correlation matrix
+corr = numeric_df.corr().abs()
+
+# Plot full heatmap
+plt.figure(figsize=(22, 18))
+sns.heatmap(corr, cmap='coolwarm', center=0, linewidths=0.3, annot=False)
+plt.title('Feature Correlation Heatmap (Before Drops)')
+plt.savefig('correlation_heatmap.png', dpi=150)
 plt.show()
+
+# Print highly correlated pairs > 0.99
 for i in range(len(corr.columns)):
     for j in range(i+1, len(corr.columns)):
         val = corr.iloc[i, j]
         if val > 0.99:
-            print(corr.columns[i], "&lt;-&gt;", corr.columns[j], "=", round(val,4))</pre></div>
-  <div class="nb-exp"><div class="nb-el">What this does</div>
-  <p>Finds duplicate and redundant features before cleaning. corr().abs() measures similarity between every pair of columns from 0 to 1. The heatmap shows which columns are too similar visually. The double for loop checks every pair and prints those above 0.99.</p>
-  <div class="rbox">fwd_header_len and fwd_packet_count = 0.9999
-bwd_header_len and bwd_packet_count = 0.9998
-avg_packet_size and pkt_len_mean = 1.0000 (exact copy!)
-These 3 are removed in Cell 4</div>
+            print(f'{corr.columns[i]} &lt;-&gt; {corr.columns[j]} = {val:.4f}')</pre></div>
+  <div class="nb-exp"><div class="nb-el">What this does — 4 steps</div>
+  <ul>
+    <li><strong>Step 1 — Temporarily remove non-numeric columns</strong> (IPs, timestamps, labels). We can't calculate correlation on text columns like IP addresses, so we drop them temporarily just for this analysis</li>
+    <li><strong>Step 2 — Compute correlation matrix.</strong> <code>corr = numeric_df.corr().abs()</code> — Correlation measures how similar two columns are from 0 (nothing in common) to 1 (identical). <code>.abs()</code> makes all values positive (we don't care about direction, just similarity)</li>
+    <li><strong>Step 3 — Draw the heatmap.</strong> <code>sns.heatmap</code> creates a colorful grid where dark red = very similar, light = different. This visual helps spot patterns of redundancy</li>
+    <li><strong>Step 4 — Find pairs with correlation &gt; 0.99.</strong> The double for loop checks every possible pair of columns. If <code>corr.iloc[i,j] &gt; 0.99</code>, those two columns are almost identical</li>
+  </ul>
+  <div class="rbox">Found 3 highly correlated pairs:
+fwd_header_len  &lt;-&gt; fwd_packet_count = 0.9999 (basically the same thing!)
+bwd_header_len  &lt;-&gt; bwd_packet_count = 0.9998
+avg_packet_size &lt;-&gt; pkt_len_mean     = 1.0000 (exact copy!)
+These 3 columns get removed in the next step</div>
   </div></div>
 
+  <!-- CELL 4 -->
   <div class="nb"><div class="nb-hd"><span class="nb-num">Cell 4</span><span class="nb-title">Preprocessing &amp; Feature Engineering</span></div>
-  <div class="nb-code"><pre>df_full = df.copy()
-df_clean = df.drop(columns=['src_ip','dst_ip','src_port','dst_port',
-                             'protocol','flow_start_time','pcap_source'])
-df_clean = df_clean.drop(columns=['fwd_header_len','bwd_header_len','avg_packet_size'])
+  <div class="nb-code"><pre># Keep full copy for temporal split later
+df_full = df.copy()
+
+# Drop identifier columns
+drop_ids = ['src_ip', 'dst_ip', 'src_port', 'dst_port',
+            'protocol', 'flow_start_time', 'pcap_source']
+df_clean = df.drop(columns=drop_ids)
+
+# Drop redundant correlated columns
+drop_redundant = ['fwd_header_len', 'bwd_header_len', 'avg_packet_size']
+df_clean = df_clean.drop(columns=drop_redundant)
+
+# Add 5 behavioral features
 df_clean['bytes_per_packet']   = df_clean['bytes_per_sec'] / (df_clean['packets_per_sec'] + 1)
 df_clean['fwd_bwd_ratio']      = df_clean['fwd_total_bytes'] / (df_clean['bwd_total_bytes'] + 1)
 df_clean['bwd_bytes_ratio']    = df_clean['bwd_total_bytes'] / (df_clean['fwd_total_bytes'] + df_clean['bwd_total_bytes'] + 1)
 df_clean['packet_size_spread'] = df_clean['pkt_len_max'] - df_clean['pkt_len_min']
 df_clean['tcp_window_range']   = df_clean['mean_tcp_window'] - df_clean['std_tcp_window']
+
+# Clip outliers at 99th percentile
 for col in clip_cols:
-    cap = df_clean[col].quantile(0.99)
-    df_clean[col] = df_clean[col].clip(upper=cap)</pre></div>
-  <div class="nb-exp"><div class="nb-el">5 things happening</div>
+    if col in df_clean.columns:
+        cap = df_clean[col].quantile(0.99)
+        df_clean[col] = df_clean[col].clip(upper=cap)</pre></div>
+  <div class="nb-exp"><div class="nb-el">5 things happening in this cell</div>
   <ul>
-    <li><strong>df_full = df.copy()</strong> &mdash; backup before changes. Needed later for temporal split which requires flow_start_time</li>
-    <li><strong>Drop 7 identifier columns</strong> &mdash; IPs, ports, timestamps. If kept, model learns lab IPs instead of general attack behavior</li>
-    <li><strong>Drop 3 redundant columns</strong> &mdash; the near-identical pairs found in Cell 3</li>
-    <li><strong>Add 5 behavioral features</strong> &mdash; bytes_per_packet (floods use tiny packets), fwd_bwd_ratio (attacks are one-directional), bwd_bytes_ratio, packet_size_spread (near 0 in floods), tcp_window_range. The +1 prevents division-by-zero errors</li>
-    <li><strong>Clip outliers at 99th percentile</strong> &mdash; caps extreme values without deleting any rows</li>
+    <li><strong>df_full = df.copy()</strong> &mdash; Saves a backup copy of the original data before we change anything. We need the original later for the temporal split (it has flow_start_time)</li>
+    <li><strong>Drop 7 identifier columns</strong> &mdash; These columns would make the AI 'cheat' by memorizing lab IPs. Example: if we keep src_ip, the model learns "192.168.85.10 = attack". In any other network with different IPs, it would fail completely. So we remove: src_ip, dst_ip, src_port, dst_port, flow_start_time, pcap_source</li>
+    <li><strong>Drop 3 redundant columns</strong> &mdash; Remove the 3 near-identical columns found in Cell 3. Having duplicates confuses the model (like telling it the same fact twice)</li>
+    <li><strong>Add 5 new behavioral features:</strong>
+      <ul>
+        <li><code>bytes_per_packet</code> = bytes_per_sec / packets_per_sec → How big is each packet on average? Floods use tiny packets</li>
+        <li><code>fwd_bwd_ratio</code> = forward bytes / backward bytes → In attacks, traffic is one-way. Normal traffic is two-way balanced</li>
+        <li><code>bwd_bytes_ratio</code> = backward bytes / total bytes → Low = attacker is sending, victim barely responds</li>
+        <li><code>packet_size_spread</code> = max packet size - min packet size → Near zero in floods (all packets same size)</li>
+        <li><code>tcp_window_range</code> = mean window - std window → Captures variation in TCP window sizes</li>
+        <li>Note the <code>+1</code> in divisions! This prevents division-by-zero errors</li>
+      </ul>
+    </li>
+    <li><strong>Clip outliers at 99th percentile</strong> &mdash; For each numeric column, find the 99th percentile value and cap any value above that limit. Example: if 99% of flows have bytes_per_sec &lt; 500,000, then any flow with 50,000,000 gets capped at 500,000. We keep the row — we just reduce the extreme number</li>
   </ul>
-  <div class="rbox">56 columns minus 10 plus 5 = 51 total. Minus label = 50 input features</div>
+  <div class="rbox">56 columns - 10 dropped + 5 added = 51 total. Minus label = 50 input features</div>
   </div></div>
 
+  <!-- CELL 5 -->
   <div class="nb"><div class="nb-hd"><span class="nb-num">Cell 5</span><span class="nb-title">Temporal Train/Test Split</span></div>
-  <div class="nb-code"><pre>for source in df_clean['pcap_source'].unique():
+  <div class="nb-code"><pre>df_clean['flow_start_time'] = df_full['flow_start_time']
+df_clean['pcap_source']     = df_full['pcap_source']
+
+X_train_list = []
+X_test_list  = []
+
+for source in df_clean['pcap_source'].unique():
+    source_df = df_clean[df_clean['pcap_source'] == source].copy()
     source_df = source_df.sort_values('flow_start_time')
     n = len(source_df)
-    if n &lt; 50:    split = int(n * 0.80)
-    elif n &lt; 300: split = int(n * 0.60)
-    else:         split = int(n * 0.70)
+    if n &lt; 50:
+        split = int(n * 0.80)
+    elif n &lt; 300:
+        split = int(n * 0.60)
+    else:
+        split = int(n * 0.70)
     X_train_list.append(source_df.iloc[:split])
-    X_test_list.append(source_df.iloc[split:])</pre></div>
-  <div class="nb-exp"><div class="nb-el">Why not random split?</div>
-  <p>Random split mixes packets from the same attack session into both train and test &mdash; data leakage. Temporal split sorts each PCAP chronologically, puts first 70% in training and last 30% in testing. Model always tests on NEW traffic it has never seen before.</p>
-  <div class="rbox">Train: 71,238 rows | Test: 30,587 rows | Features: 50</div>
+    X_test_list.append(source_df.iloc[split:])
+
+train_df = pd.concat(X_train_list, ignore_index=True)
+test_df  = pd.concat(X_test_list,  ignore_index=True)
+
+feature_cols = [c for c in train_df.columns if c != 'label']
+X_train = train_df[feature_cols]
+y_train = train_df['label']
+X_test  = test_df[feature_cols]
+y_test  = test_df['label']</pre></div>
+  <div class="nb-exp"><div class="nb-el">Why not just random_split(test_size=0.2)?</div>
+  <p>A random split would shuffle all rows, then put 80% in train and 20% in test. Problem: packets from the SAME attack session could end up in both sets. The model would recognize them and score too high — that's data leakage / cheating.</p>
+  <p><strong>Our method — Temporal per-file split:</strong> For EACH of the 24 PCAP files separately: (1) Sort the rows by time (oldest to newest), (2) Put the first 70% in training (older traffic), (3) Put the last 30% in testing (newer traffic). This means the model always sees NEW traffic during testing. Just like a real IDS: you train on past traffic, deploy on future traffic.</p>
+  <ul>
+    <li>Small file (&lt; 50 rows) → 80% train, 20% test</li>
+    <li>Medium file (&lt; 300 rows) → 60% train, 40% test (need more test data)</li>
+    <li>Large file (&ge; 300 rows) → 70% train, 30% test (standard split)</li>
+  </ul>
+  <p><code>feature_cols = [c for c in train_df.columns if c != 'label']</code> — Gets all column names EXCEPT 'label' — those are the 50 input features. X = the 50 features (inputs). y = the label column (what we want to predict).</p>
+  <div class="rbox">Train size: 71,238 rows | Test size: 30,587 rows | Features: 50</div>
   </div></div>
 
+  <!-- CELL 6 -->
   <div class="nb"><div class="nb-hd"><span class="nb-num">Cell 6</span><span class="nb-title">Label Encoding, Scaling &amp; Class Weights</span></div>
-  <div class="nb-code"><pre>le = LabelEncoder()
+  <div class="nb-code"><pre># Label encoding
+le = LabelEncoder()
 y_train_enc = le.fit_transform(y_train)
 y_test_enc  = le.transform(y_test)
+
+# Scale features
 scaler = StandardScaler()
 X_train_scaled = scaler.fit_transform(X_train)
 X_test_scaled  = scaler.transform(X_test)
+
+# Compute class weights
+classes = np.unique(y_train_enc)
 weights = compute_class_weight('balanced', classes=classes, y=y_train_enc)
-class_weight_dict = dict(zip(classes, weights))</pre></div>
-  <div class="nb-exp"><div class="nb-el">3 things</div>
+class_weight_dict = dict(zip(classes, weights))
+
+# Sample weights for XGBoost
+sample_weights = np.array([class_weight_dict[y] for y in y_train_enc])</pre></div>
+  <div class="nb-exp"><div class="nb-el">3 things happening</div>
   <ul>
-    <li><strong>LabelEncoder</strong> &mdash; attack=0, dos=1, normal=2, recon=3. fit_transform on train, transform only on test. Never fit on test data</li>
-    <li><strong>StandardScaler</strong> &mdash; mean=0, std=1 for all 50 features. Critical for KNN which uses Euclidean distance. Fit only on training data</li>
-    <li><strong>Class weights</strong> &mdash; attack=4.5008, dos=0.5543, normal=1.9285, recon=0.6872. Forces model to pay 4.5x more attention to rare Attack class</li>
+    <li><strong>Label Encoding —</strong> ML models only understand numbers, not text. LabelEncoder converts: attack→0, dos→1, normal→2, recon→3. <code>le.fit_transform(y_train)</code> = Learn the mapping AND apply it to training labels. <code>le.transform(y_test)</code> = Apply the SAME mapping to test labels. Never fit on test data — that would be leakage!</li>
+    <li><strong>Feature Scaling with StandardScaler —</strong> Some features have huge ranges (bytes_per_sec = millions). Some features have tiny ranges (syn_ratio = 0 to 1). Without scaling, big-range features dominate the model unfairly. StandardScaler makes every column have mean=0, std=1. <code>scaler.fit_transform(X_train)</code> = Learn the mean/std from training, then scale it. <code>scaler.transform(X_test)</code> = Scale test using the SAME mean/std from training. Never fit on test data!</li>
+    <li><strong>Class Weights —</strong> The dataset is imbalanced: Attack = only 5.57% but DOS = 45%. <code>compute_class_weight('balanced', ...)</code> calculates weights automatically. <code>sample_weights</code> assigns each training row its class weight — this is used by XGBoost which needs per-sample weights</li>
   </ul>
+  <div class="rbox">attack  (class 0) = 4.5008  ← very expensive to get wrong
+dos     (class 1) = 0.5543  ← cheap because there are so many
+normal  (class 2) = 1.9285
+recon   (class 3) = 0.6872</div>
   </div></div>
 
-  <div class="nb"><div class="nb-hd"><span class="nb-num">Cells 7-11</span><span class="nb-title">Training All 5 Models</span></div>
-  <div class="nb-code"><pre>dt  = DecisionTreeClassifier(class_weight=class_weight_dict, random_state=42)
-rf  = RandomForestClassifier(n_estimators=100, class_weight=class_weight_dict,
-                              random_state=42, n_jobs=-1)
-knn = KNeighborsClassifier(n_neighbors=5, n_jobs=-1)
-lr  = LogisticRegression(class_weight=class_weight_dict, max_iter=1000,
-                          random_state=42)
-xgb_model = xgb.XGBClassifier(n_estimators=200, max_depth=6,
-    learning_rate=0.1, eval_metric='mlogloss', random_state=42)</pre></div>
-  <div class="nb-exp"><div class="nb-el">Key parameters</div>
-  <ul>
-    <li><code>random_state=42</code> &mdash; seeds RNG for reproducibility. Value is arbitrary</li>
-    <li><code>n_jobs=-1</code> &mdash; use all CPU cores. Faster training, no effect on accuracy</li>
-    <li><code>max_depth=6</code> &mdash; limits XGBoost tree depth to prevent overfitting</li>
-    <li><code>learning_rate=0.1</code> &mdash; each tree contributes only 10% correction</li>
-    <li><code>max_iter=1000</code> &mdash; Logistic Regression needs more iterations for complex data</li>
-  </ul>
-  <div class="rbox">DT: 0.9987 | RF: 0.9970 | KNN: 0.9961 | LR: 0.9884 | XGBoost: 0.9986</div>
-  </div></div>
-
-  <div class="nb"><div class="nb-hd"><span class="nb-num">Cell 12</span><span class="nb-title">Model Comparison &amp; Overfitting Check</span></div>
-  <div class="nb-code"><pre>for name, r in results.items():
-    gap = r['train_acc'] - r['test_acc']
-    verdict = "OK" if gap &lt; 0.01 else "Overfit"
-    print(name, "train=", r['train_acc'], "test=", r['test_acc'], "gap=", gap, verdict)</pre></div>
+  <!-- CELL 7 -->
+  <div class="nb"><div class="nb-hd"><span class="nb-num">Cell 7</span><span class="nb-title">Decision Tree</span></div>
+  <div class="nb-code"><pre>print('Training Decision Tree...')
+start = time.time()
+dt = DecisionTreeClassifier(class_weight=class_weight_dict, random_state=42)
+dt.fit(X_train_scaled, y_train_enc)
+dt_time = time.time() - start
+dt_pred = dt.predict(X_test_scaled)
+results['Decision Tree'] = {
+    'model'    : dt,
+    'pred'     : dt_pred,
+    'time'     : dt_time,
+    'train_acc': accuracy_score(y_train_enc, dt.predict(X_train_scaled)),
+    'test_acc' : accuracy_score(y_test_enc, dt_pred),
+}
+print(f'Done in {dt_time:.2f}s')</pre></div>
   <div class="nb-exp"><div class="nb-el">What this does</div>
-  <p>gap = train_acc minus test_acc. A large gap means the model memorized training data (overfitting). All our gaps are tiny which means no overfitting.</p>
-  <div class="rbox">DT: gap=0.0010 OK | RF: gap=0.0028 OK | KNN: gap=0.0014 OK | LR: gap=0.0014 OK | XGB: gap=0.0011 OK</div>
+  <p>Decision Tree learns a series of if-then rules to classify traffic. Think of it like 20 Questions: "Is packets_per_sec &gt; 1000? Is syn_ratio &gt; 0.9?"</p>
+  <ul>
+    <li><code>DecisionTreeClassifier(class_weight=class_weight_dict)</code> &mdash; Applies the imbalance weights</li>
+    <li><code>random_state=42</code> &mdash; Seeds random number generator for reproducibility. Value is arbitrary</li>
+    <li><code>dt.fit(X_train_scaled, y_train_enc)</code> &mdash; TRAINING: the model learns the rules from data</li>
+    <li><code>dt.predict(X_test_scaled)</code> &mdash; TESTING: applies learned rules to new unseen data</li>
+    <li><code>time.time()</code> before and after &mdash; Measures exactly how long training took</li>
+    <li>The 'results' dictionary stores everything: model, predictions, time, train accuracy, test accuracy. Used later to compare all 5 models side by side</li>
+  </ul>
+  <div class="rbox">F1 = 0.9987 | Training time = 1.45s</div>
   </div></div>
 
+  <!-- CELL 8 -->
+  <div class="nb"><div class="nb-hd"><span class="nb-num">Cell 8</span><span class="nb-title">Random Forest</span></div>
+  <div class="nb-code"><pre>print('Training Random Forest...')
+start = time.time()
+rf = RandomForestClassifier(n_estimators=100, class_weight=class_weight_dict,
+                             random_state=42, n_jobs=-1)
+rf.fit(X_train_scaled, y_train_enc)
+rf_time = time.time() - start
+rf_pred = rf.predict(X_test_scaled)
+results['Random Forest'] = { ... }
+print(f'Done in {rf_time:.2f}s')</pre></div>
+  <div class="nb-exp"><div class="nb-el">What this does</div>
+  <p>Random Forest builds 100 separate Decision Trees and takes a majority vote. If 70 trees say 'DOS' and 30 say 'Normal', the answer is 'DOS'.</p>
+  <ul>
+    <li><code>n_estimators=100</code> &mdash; Build 100 trees. More trees = more reliable BUT slower to train</li>
+    <li><code>n_jobs=-1</code> &mdash; Use all available CPU cores (speeds up training with parallel processing)</li>
+    <li><strong>Why better than a single tree?</strong> Each tree sees a slightly different random sample of the data. Individual trees might be wrong, but the majority vote is usually right. This reduces overfitting significantly</li>
+  </ul>
+  <div class="rbox">F1 = 0.9970 | Training time = 10.15s (slower because 100 trees)</div>
+  </div></div>
+
+  <!-- CELL 9 -->
+  <div class="nb"><div class="nb-hd"><span class="nb-num">Cell 9</span><span class="nb-title">KNN (K-Nearest Neighbors)</span></div>
+  <div class="nb-code"><pre>print('Training KNN...')
+start = time.time()
+knn = KNeighborsClassifier(n_neighbors=5, n_jobs=-1)
+knn.fit(X_train_scaled, y_train_enc)
+knn_time = time.time() - start
+knn_pred = knn.predict(X_test_scaled)
+results['KNN'] = { ... }
+print(f'Done in {knn_time:.2f}s')</pre></div>
+  <div class="nb-exp"><div class="nb-el">What this does</div>
+  <p>KNN = K-Nearest Neighbors. For any new flow, it finds the 5 most similar flows in the training data and assigns the most common label among those 5.</p>
+  <ul>
+    <li><code>n_neighbors=5</code> &mdash; Look at the 5 closest neighbors (k=5). Analogy: "This new flow looks most similar to 3 DOS flows and 2 Normal flows", so the prediction is 'DOS' (majority of 5)</li>
+    <li><strong>NOTE: KNN has NO real training phase</strong> &mdash; .fit() just stores all training data in memory. That's why it trains in only 0.04 seconds! BUT at prediction time it's very slow because for every new flow, it must compare against ALL 71,238 stored training flows. This makes it unsuitable for real-time IDS deployment</li>
+    <li><strong>IMPORTANT:</strong> KNN is distance-based, so StandardScaler was ESSENTIAL. Without scaling, bytes_per_sec (millions) would dominate all distance calculations</li>
+  </ul>
+  <div class="rbox">F1 = 0.9961 | Training time = 0.04s (but prediction is slow — not suitable for real-time IDS)</div>
+  </div></div>
+
+  <!-- CELL 10 -->
+  <div class="nb"><div class="nb-hd"><span class="nb-num">Cell 10</span><span class="nb-title">Logistic Regression</span></div>
+  <div class="nb-code"><pre>print('Training Logistic Regression...')
+start = time.time()
+lr = LogisticRegression(class_weight=class_weight_dict, max_iter=1000,
+                         random_state=42, n_jobs=-1)
+lr.fit(X_train_scaled, y_train_enc)
+lr_time = time.time() - start
+lr_pred = lr.predict(X_test_scaled)
+results['Logistic Regression'] = { ... }
+print(f'Done in {lr_time:.2f}s')</pre></div>
+  <div class="nb-exp"><div class="nb-el">What this does</div>
+  <p>Logistic Regression draws straight lines to separate classes. It's the simplest model — used as a 'baseline' to compare against.</p>
+  <ul>
+    <li><code>max_iter=1000</code> &mdash; Allow up to 1000 iterations for the math to converge. Default is 100 but that's not enough for complex datasets. Without this, you'd get a 'did not converge' warning</li>
+    <li><strong>Why it performs worst:</strong> Network traffic classification has curved, complex decision boundaries. Logistic Regression can only draw STRAIGHT lines. You can't separate DOS from RECON with a straight line in feature space. This is called 'underfitting' — the model is too simple for the problem</li>
+    <li>Proof: training accuracy (0.9896) and test accuracy (0.9882) are both low. The gap is tiny (0.0014) — it's not overfitting, it's genuinely limited</li>
+  </ul>
+  <div class="rbox">F1 = 0.9884 | Training time = 8.30s (slowest) | Lowest performer — model is too simple</div>
+  </div></div>
+
+  <!-- CELL 11 -->
+  <div class="nb"><div class="nb-hd"><span class="nb-num">Cell 11</span><span class="nb-title">XGBoost</span></div>
+  <div class="nb-code"><pre>print('Training XGBoost...')
+start = time.time()
+xgb_model = xgb.XGBClassifier(
+    n_estimators=200,
+    max_depth=6,
+    learning_rate=0.1,
+    eval_metric='mlogloss',
+    random_state=42,
+    n_jobs=-1
+)
+xgb_model.fit(X_train_scaled, y_train_enc, sample_weight=sample_weights)
+xgb_time = time.time() - start
+xgb_pred = xgb_model.predict(X_test_scaled)
+results['XGBoost'] = { ... }
+print(f'Done in {xgb_time:.2f}s')</pre></div>
+  <div class="nb-exp"><div class="nb-el">What this does — the BEST model</div>
+  <p>XGBoost = Extreme Gradient Boosting. It builds 200 trees one at a time — each tree fixes the mistakes of the previous one.</p>
+  <ul>
+    <li><code>n_estimators=200</code> &mdash; Build 200 sequential trees</li>
+    <li><code>max_depth=6</code> &mdash; Each tree can be at most 6 levels deep. This PREVENTS overfitting — trees can't grow infinitely and memorize training data</li>
+    <li><code>learning_rate=0.1</code> &mdash; Each new tree only contributes 10% to the final prediction. Combined with max_depth=6, this is strong regularization. Analogy: each new tree is a 'small correction', not a full takeover</li>
+    <li><code>eval_metric='mlogloss'</code> &mdash; Use multi-class log loss to measure error during training</li>
+    <li><code>sample_weight=sample_weights</code> &mdash; XGBoost uses per-sample weights (not class_weight_dict). This is how we tell XGBoost to pay 4.5× more attention to Attack class samples</li>
+    <li><strong>Difference from Random Forest:</strong> Random Forest = 100 independent trees voting in parallel. XGBoost = 200 trees built sequentially, each fixing the last one's errors</li>
+  </ul>
+  <div class="rbox">F1 = 0.9986 | CV mean = 0.9993 | CV std = 0.000103 (MOST STABLE)</div>
+  </div></div>
+
+  <!-- CELL 12 -->
+  <div class="nb"><div class="nb-hd"><span class="nb-num">Cell 12</span><span class="nb-title">Model Comparison Summary</span></div>
+  <div class="nb-code"><pre>print('\n Model Comparison ')
+print(f"{'Model':<20} {'Train Acc':>10} {'Test Acc':>10} {'Gap':>10} {'Time':>10}")
+print('-' * 62)
+for name, r in results.items():
+    gap = r['train_acc'] - r['test_acc']
+    print(f"{name:<20} {r['train_acc']:>10.4f} {r['test_acc']:>10.4f} {gap:>10.4f} {r['time']:>9.2f}s")</pre></div>
+  <div class="nb-exp"><div class="nb-el">What this does</div>
+  <p>This prints a clean summary table comparing all 5 models.</p>
+  <ul>
+    <li><code>results.items()</code> &mdash; Loops through all 5 models stored in the 'results' dictionary</li>
+    <li><code>gap = train_acc - test_acc</code> &mdash; The overfitting check! If gap is small (&lt; 0.01) → model is NOT overfitting. If gap is large (e.g. 0.10) → model is overfitting (memorizing training data)</li>
+  </ul>
+  <div class="rbox">Decision Tree:       train=0.9998  test=0.9987  gap=0.0010  ✓ OK
+Random Forest:       train=0.9998  test=0.9970  gap=0.0028  ✓ OK
+KNN:                 train=0.9976  test=0.9961  gap=0.0014  ✓ OK
+Logistic Regression: train=0.9896  test=0.9882  gap=0.0014  ✓ OK
+XGBoost:             train=0.9998  test=0.9986  gap=0.0011  ✓ OK
+All gaps tiny → NONE of the 5 models are overfitting</div>
+  </div></div>
+
+  <!-- CELL 13 -->
   <div class="nb"><div class="nb-hd"><span class="nb-num">Cell 13</span><span class="nb-title">5-Fold Cross Validation</span></div>
   <div class="nb-code"><pre>skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
-scores = cross_val_score(model, X_train_scaled, y_train_enc,
-                         cv=skf, scoring='accuracy')
-print("Mean:", scores.mean(), "  Std:", scores.std())
-print("Stable" if scores.std() &lt; 0.005 else "Unstable")</pre></div>
-  <div class="nb-exp"><div class="nb-el">What this does</div>
-  <p>Splits training data into 5 folds, train on 4 test on 1, repeat 5 times. Every sample tested exactly once. Low standard deviation means the model performs consistently regardless of which data it sees.</p>
-  <div class="rbox">XGBoost: mean=0.9993, std=0.000103 &mdash; MOST STABLE
-All models: Status = Stable (std less than 0.005)</div>
+
+for name, r in results.items():
+    scores = cross_val_score(r['model'], X_train_scaled, y_train_enc,
+                             cv=skf, scoring='accuracy', n_jobs=-1)
+    print(f'{name}')
+    for i, s in enumerate(scores):
+        print(f'  Fold {i+1} : {s:.4f}')
+    print(f'  Mean  : {scores.mean():.4f}')
+    print(f'  Std   : {scores.std():.6f}')
+    status = 'Stable' if scores.std() &lt; 0.005 else 'Unstable'
+    print(f'  Status : {status}')</pre></div>
+  <div class="nb-exp"><div class="nb-el">How cross-validation works</div>
+  <p>Cross-validation checks that our test results aren't just a lucky split.</p>
+  <ul>
+    <li><code>StratifiedKFold</code> splits training data into 5 equal folds. 'Stratified' means each fold has the same class distribution as the full dataset</li>
+    <li>Round 1: Train on folds 2,3,4,5 → Test on fold 1 &nbsp;|&nbsp; Round 2: Train on folds 1,3,4,5 → Test on fold 2 &nbsp;|&nbsp; ... and so on. Every row gets tested exactly once</li>
+    <li><code>cross_val_score()</code> &mdash; Does all 5 rounds automatically and returns 5 accuracy scores</li>
+    <li><code>scores.std()</code> &mdash; How much the 5 scores vary. Low std = model is consistent. High std = model is sensitive/unstable</li>
+  </ul>
+  <div class="rbox">XGBoost:           mean=0.9993, std=0.000103 ← MOST STABLE (smallest variation)
+Decision Tree:     mean=0.9991, std=0.000136
+KNN:               mean=0.9958, std=0.000776 ← most variation
+Logistic Reg:      mean=0.9891 ← lowest performance confirmed again
+All models Status = 'Stable' (std &lt; 0.005)</div>
   </div></div>
 
+  <!-- CELL 14 -->
   <div class="nb"><div class="nb-hd"><span class="nb-num">Cell 14</span><span class="nb-title">XGBoost Feature Importance</span></div>
   <div class="nb-code"><pre>importances = xgb_model.feature_importances_
-feat_imp = pd.DataFrame({'feature':feature_cols,'importance':importances})
-feat_imp = feat_imp.sort_values('importance', ascending=False)
-feat_imp['cumulative'] = feat_imp['importance'].cumsum()</pre></div>
-  <div class="nb-exp"><div class="nb-el">What this does</div>
-  <p>Built-in XGBoost score: how often each feature was used to split a node across all 200 trees. Higher score means more important for classification. cumsum() shows running total of how much the top N features explain.</p>
-  <div class="rbox">1. fwd_std_packet_len = 0.3183 (floods have zero packet size variation)
-2. fwd_min_packet_len = 0.2235 | 3. bwd_total_bytes = 0.1232
-4. mean_ttl = 0.1169 | 5. fwd_max_packet_len = 0.0866
-Top 5 explain 86.86% of ALL decisions</div>
-  </div></div>
+feat_imp = pd.DataFrame({
+    'feature'    : feature_cols,
+    'importance' : importances
+}).sort_values('importance', ascending=False).reset_index(drop=True)
+feat_imp['cumulative'] = feat_imp['importance'].cumsum()
 
-  <div class="nb"><div class="nb-hd"><span class="nb-num">Cell 15</span><span class="nb-title">Confidence-Based Alert System</span></div>
-  <div class="nb-code"><pre>probs     = xgb_model.predict_proba(X_test_scaled)
-max_probs = probs.max(axis=1)
-for i in range(len(pred_labels)):
-    confidence = max_probs[i]
-    if pred_name == 'normal' or confidence &lt; 0.60:
-        ignored += 1
-    elif confidence &gt;= 0.85:
-        confirmed += 1
-    else:
-        suspicious += 1</pre></div>
+print('Top 15 Features - XGBoost:')
+for i, row in feat_imp.head(15).iterrows():
+    print(f"{i+1}  {row['feature']:<30} {row['importance']:>10.4f}  cumulative={row['cumulative']:>6.4f}")</pre></div>
   <div class="nb-exp"><div class="nb-el">What this does</div>
-  <p>predict_proba() gives probabilities per class for example [0.02, 0.96, 0.01, 0.01]. We take the maximum as the confidence score and sort into 3 tiers: CONFIRMED above 85% gets immediate alert, SUSPICIOUS 60 to 85% gets flagged for human review, IGNORED below 60% gets dropped silently.</p>
-  <div class="rbox">CONFIRMED above 85%: 26,564 (86.8%) accuracy 99.96%
-SUSPICIOUS 60-85%: 17 (0.1%) | IGNORED below 60%: 4,006 (13.1%)
-False positive rate: only 0.15%</div>
-  </div></div>
-
-  <div class="nb"><div class="nb-hd"><span class="nb-num">Cell 16</span><span class="nb-title">Save Model Files (.pkl)</span></div>
-  <div class="nb-code"><pre>joblib.dump(xgb_model,    'xgboost_model.pkl')   # 1.31 MB
-joblib.dump(scaler,       'scaler.pkl')           # 2,935 bytes
-joblib.dump(le,           'label_encoder.pkl')    # 505 bytes
-joblib.dump(feature_cols, 'feature_columns.pkl')  # 884 bytes
-joblib.dump({'HIGH_CONF':0.85,'MED_CONF':0.60}, 'thresholds.pkl')  # 57 bytes</pre></div>
-  <div class="nb-exp"><div class="nb-el">Why 5 separate files?</div>
+  <p>XGBoost has a built-in feature importance score — it tracks which features were most useful when splitting nodes across all 200 trees.</p>
   <ul>
-    <li><code>xgboost_model.pkl</code> &mdash; the 200 trained trees. IDS loads this to classify live flows</li>
-    <li><code>scaler.pkl</code> &mdash; must use the SAME scaler as training or features will be on wrong scale</li>
-    <li><code>label_encoder.pkl</code> &mdash; maps 0 to attack, 1 to dos etc for GUI display</li>
-    <li><code>feature_columns.pkl</code> &mdash; 50 feature names IN ORDER. Wrong order = completely wrong predictions</li>
-    <li><code>thresholds.pkl</code> &mdash; stored separately so thresholds can be tuned without retraining the model</li>
+    <li><code>xgb_model.feature_importances_</code> &mdash; Returns an array of 50 scores (one per feature). Each score = percentage of the time that feature was used to make a split. Higher score = more important</li>
+    <li><code>feat_imp['cumulative'] = cumsum()</code> &mdash; Running total showing how much of the decisions are explained by the top N features</li>
   </ul>
-  <div class="rbox">Total: 1.32 MB &mdash; extremely lightweight deployed AI security system</div>
+  <div class="rbox">1. fwd_std_packet_len = 0.3183 (31.83% of all decisions!)
+   WHY: Flood attacks send identical-sized packets → std deviation near zero
+        Normal traffic has varied sizes → higher std deviation
+2. fwd_min_packet_len = 0.2235 — Floods use minimum-sized packets
+3. bwd_total_bytes    = 0.1232 — In attacks, victim barely responds
+4. mean_ttl           = 0.1169 — Attackers use fixed default TTL values
+5. fwd_max_packet_len = 0.0866
+Top 5 together explain 86.86% of ALL classification decisions</div>
+  </div></div>
+
+  <!-- CELL 15 -->
+  <div class="nb"><div class="nb-hd"><span class="nb-num">Cell 15</span><span class="nb-title">Confidence-Based Alert System</span></div>
+  <div class="nb-code"><pre>HIGH_CONF = 0.85
+MED_CONF  = 0.60
+
+# Get probabilities from XGBoost
+probs       = xgb_model.predict_proba(X_test_scaled)
+max_probs   = probs.max(axis=1)
+pred_labels = xgb_model.predict(X_test_scaled)
+
+for i in range(len(pred_labels)):
+    pred       = pred_labels[i]
+    confidence = max_probs[i]
+    true       = y_test_arr[i]
+    pred_name  = le.classes_[pred]
+
+    if pred_name == 'normal' or confidence &lt; MED_CONF:
+        ignored += 1
+    elif confidence &gt;= HIGH_CONF:
+        confirmed += 1
+        if pred == true: conf_correct += 1
+        else:            conf_wrong += 1
+    else:
+        suspicious += 1
+
+print(f'CONFIRMED  (&gt;=85%): {confirmed}')
+print(f'SUSPICIOUS (60-85%): {suspicious}')
+print(f'IGNORED    (&lt;60%): {ignored}')
+print(f'Confirmed alert accuracy: {conf_correct/confirmed*100:.2f}%')</pre></div>
+  <div class="nb-exp"><div class="nb-el">The 3-tier alert system — most important IDS feature</div>
+  <p><strong>Background:</strong> <code>predict()</code> only gives a label. <code>predict_proba()</code> gives PROBABILITIES. Example output: [0.02, 0.96, 0.01, 0.01] = 2% attack, 96% dos, 1% normal, 1% recon. <code>max_probs</code> takes the highest probability = 0.96 = the confidence score.</p>
+  <ul>
+    <li><strong>CONFIRMED (confidence &ge; 85%):</strong> Model is very sure. Alert shown in GUI immediately. In production: would auto-trigger firewall rules</li>
+    <li><strong>SUSPICIOUS (60% to 85%):</strong> Model is moderately sure. Flagged for human review. Captures ambiguous flows that might be new attack patterns</li>
+    <li><strong>IGNORED (&lt; 60% OR predicted as 'normal'):</strong> Too uncertain. Silently dropped. Prevents log pollution from incomplete/malformed flows</li>
+    <li><strong>Why better than simple predict()?</strong> Simple predict gives you 'attack' or 'normal' with no nuance. With confidence tiers: a 51% 'attack' is treated very differently from a 99% 'attack'</li>
+  </ul>
+  <div class="rbox">CONFIRMED  (&gt;=85%): 26,564 flows (86.8%) → accuracy 99.96%
+SUSPICIOUS (60-85%): 17 flows   (0.1%)
+IGNORED    (&lt;60%):  4,006 flows (13.1%)
+False positive rate: only 0.15%!</div>
+  </div></div>
+
+  <!-- CELL 16 -->
+  <div class="nb"><div class="nb-hd"><span class="nb-num">Cell 16</span><span class="nb-title">Save Model Files (.pkl)</span></div>
+  <div class="nb-code"><pre>joblib.dump(xgb_model,    'xgboost_model.pkl')
+joblib.dump(scaler,       'scaler.pkl')
+joblib.dump(le,           'label_encoder.pkl')
+joblib.dump(feature_cols, 'feature_columns.pkl')
+thresholds = {'HIGH_CONF': 0.85, 'MED_CONF': 0.60}
+joblib.dump(thresholds,   'thresholds.pkl')
+
+import os
+model_files = ['xgboost_model.pkl', 'scaler.pkl', 'label_encoder.pkl',
+               'feature_columns.pkl', 'thresholds.pkl']
+for f in model_files:
+    size = os.path.getsize(f)
+    print(f'{f:<25}  {size:,} bytes')</pre></div>
+  <div class="nb-exp"><div class="nb-el">Why 5 separate files?</div>
+  <p><code>pkl</code> = Python's way of saving any object to disk (serialization). <code>joblib.dump()</code> is used instead of Python's built-in pickle because joblib is optimized for large NumPy arrays → smaller files, faster loading.</p>
+  <ul>
+    <li><code>xgboost_model.pkl</code> (1,312,628 bytes = 1.31 MB) &mdash; The trained XGBoost classifier with all 200 trees. IDS loads this to classify live traffic flows</li>
+    <li><code>scaler.pkl</code> (2,935 bytes) &mdash; The fitted StandardScaler (knows the mean/std of each feature from training). IDS MUST use the SAME scaler — if features aren't scaled the same way, the model gets wrong inputs and makes wrong predictions</li>
+    <li><code>label_encoder.pkl</code> (505 bytes) &mdash; The LabelEncoder mapping (0→attack, 1→dos, 2→normal, 3→recon). IDS uses this to convert numeric predictions back to readable names for the GUI</li>
+    <li><code>feature_columns.pkl</code> (884 bytes) &mdash; The list of 50 feature names IN ORDER. IDS must build live feature vectors in EXACTLY this order. Wrong order = completely wrong predictions</li>
+    <li><code>thresholds.pkl</code> (57 bytes) &mdash; The 0.85 and 0.60 confidence thresholds. Stored separately so you can tune thresholds without retraining the model</li>
+  </ul>
+  <div class="rbox">Total size: ~1.32 MB — extremely lightweight for a deployed AI security system</div>
   </div></div>
 
 </div></div>
+
 
 <div class="page" id="qa-data"><div class="wrap">
   <div class="ph"><div class="ph-eye">// preprocessing</div><h2>Data &amp; Features Q&amp;A</h2><p>Click any question to expand the answer.</p></div>
